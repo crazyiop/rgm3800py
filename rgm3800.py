@@ -1055,6 +1055,9 @@ def DoTrackX(rgm, args):
   e_gpx = gpxdoc.documentElement
   e_gpx.setAttribute('version', '1.1')
   e_gpx.setAttribute('creator', 'rgm3800py')
+  e_gpx.setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+  e_gpx.setAttribute('xmlns', 'http://www.topografix.com/GPX/1/1')
+  e_gpx.setAttribute('xsi:schemaLocation', 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd')
 
   e_trk = gpxdoc.createElement('trk')
   e_gpx.appendChild(e_trk)
