@@ -428,6 +428,12 @@ class RGM3800Waypoint(object):
       e_trkpt.appendChild(e_elevation)
       e_elevation.appendChild(gpxdoc.createTextNode('%.1f' % self.alt))
 
+    # Velocity
+    if self.format >= 2:
+      e_speed = gpxdoc.createElement('speed')
+      e_trkpt.appendChild(e_speed)
+      e_speed.appendChild(gpxdoc.createTextNode('%.6f' % (self.vel / 3.6)))
+
     # HDOP, VDOP, PDOP
     if self.format >= 4:
       e_hdop = gpxdoc.createElement('hdop')
