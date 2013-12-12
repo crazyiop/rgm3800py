@@ -1225,7 +1225,8 @@ commands = {
 
 
 def FindDevice():
-  devices = glob.glob('/dev/cu.PL2303-*')
+  patterns = ['/dev/cu.PL2303-*', '/dev/tty.usbserial']
+  devices = [device for pattern in patterns for device in glob.glob(pattern)]
   if len(devices) != 1:
     return None
   else:
