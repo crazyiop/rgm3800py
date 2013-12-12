@@ -1157,7 +1157,7 @@ def DoErase(rgm, args):
   return 0
 
 
-def DoHelp():
+def DoHelp(*args):
   print 'Usage: %s <GLOBAL OPTIONS> <COMMAND> <COMMAND OPTIONS>' % sys.argv[0]
   print
   print 'GLOBAL OPTIONS:'
