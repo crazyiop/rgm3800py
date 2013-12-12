@@ -363,6 +363,7 @@ class RGM3800WaypointTest(unittest.TestCase):
     golden = ('<trkpt lat="54.369955" lon="9.897975">'
               '<time>2008-07-31T22:36:41Z</time>'
               '<ele>56.1</ele>'
+              '<speed>1.244383</speed>'
               '<hdop>0.8</hdop>'
               '<vdop>1.1</vdop>'
               '<pdop>1.4</pdop>'
