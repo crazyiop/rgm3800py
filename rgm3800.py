@@ -283,10 +283,12 @@ class RGM3800Waypoint(object):
     self.timestamp = None
     self.date = None
     self.lat = self.lon = 0.0
-    self.alt = self.vel = 0.0
+    self.alt = self.vel = None
     self.dist = None
-    self.sat = None
+    self.nbsat = self.sat = None
     self.hdop = self.vdop = self.pdop = None
+    self.dir = None
+    self.quality = self.fix = None
  
   def SetDate(self, date):
     self.date = date
@@ -315,13 +317,17 @@ class RGM3800Waypoint(object):
       self.dist = struct.unpack('<L', data[20:24])[0]
 
     if self.format >= 4:
-      # All above + dilution of precision + sat strengths + unknown stuff
-      _ = data[24:26]  # unknown, some flags?  3d/2d lock or so?
+      # All above + fix quality + number of satellites + dilution of precision + sat strengths + direction
+      self.fix = struct.unpack('<B', data[24:25])[0] >> 4
+
+      info = struct.unpack('<B', data[25:26])[0]
+      self.quality = info % 16
+      self.nbsat = info >> 4
       self.hdop, self.pdop, self.vdop = map(lambda x: x/100.0,
                                             struct.unpack('<3H', data[26:32]))
       sat = struct.unpack('<24B', data[32:56])
       self.sat = [(sat[i], sat[i+1]) for i in range(0, 24, 2)]
-      _ = data[56:60]  # unknown
+      self.dir = struct.unpack('<f', data[56:60])[0]
 
   RAD2DEG = 180.0/math.pi
   KMH2KNOT = 1.0/1.852
@@ -358,22 +364,40 @@ class RGM3800Waypoint(object):
     data['lon'] = '%03i%07.4f' % (lon_deg, lon_min)
     data['lon_EW'] = lon_let and 'E' or 'W'
 
-    data['alt'] = '%06.1f' % self.alt
-    data['vel'] = '%06.2f' % (self.vel * self.KMH2KNOT)
+    if self.alt is not None:
+      data['alt'] = '%.1f,M' % self.alt
+    else:
+      data['alt'] = ','
+
+    if self.vel is not None:
+      data['vel'] = '%06.2f' % (self.vel * self.KMH2KNOT)
+    else:
+      data['vel'] = ''
 
     if self.dist is not None:
       data['dist'] = '%i' % self.dist
     else:
       data['dist'] = None
 
-    if self.sat is not None:
-      nsat = 0
-      for sat, snr in self.sat:
-        if snr:
-          nsat += 1
-      data['nsat'] = '%i' % nsat
+    if self.dir is not None:
+      data['dir'] = '%.2f' % self.dir
     else:
-      data['nsat'] = '00'
+      data['dir'] = ''
+
+    if self.fix is not None:
+      data['fix'] = '%i' % self.fix
+    else:
+      data['fix'] = ''
+
+    if self.quality is not None:
+      data['quality'] = '%i' % self.quality
+    else:
+      data['quality'] = ''
+
+    if self.nbsat is not None:
+      data['nsat'] = '%i' % self.nbsat
+    else:
+      data['nsat'] = ''
 
     if self.hdop is not None:
       data['hdop'] = '%01.1f' % self.hdop
@@ -385,23 +409,28 @@ class RGM3800Waypoint(object):
       data['pdop'] = ''
 
     output = []
-    output.append('GPGGA,%(time)s,%(lat)s,%(lat_NS)s,%(lon)s,%(lon_EW)s,1,%(nsat)s,%(hdop)s,%(alt)s,M,0.0,M,,0000' % data)
+    output.append('GPGGA,%(time)s,%(lat)s,%(lat_NS)s,%(lon)s,%(lon_EW)s,%(quality)s,%(nsat)s,%(hdop)s,%(alt)s,,,,' % data)
 
     if self.sat is not None:
       sat = []
+      nbsatv = 0
       elevation = 45
       azimuth = 0
       for s in self.sat:
-        sat.append('%02i,%i,%03i,%i' % (s[0], elevation, azimuth, s[1]))
+        if s[0] == 0:
+          sat.append('')
+        else:
+          nbsatv += 1
+          sat.append(',%02i,%i,%03i,%i' % (s[0], elevation, azimuth, s[1]))
         azimuth += 30
-      output.append('GPGSV,3,1,12,%s,%s,%s,%s' % tuple(sat[:4]))
-      output.append('GPGSV,3,2,12,%s,%s,%s,%s' % tuple(sat[4:8]))
-      output.append('GPGSV,3,3,12,%s,%s,%s,%s' % tuple(sat[8:]))
+      output.append('GPGSV,3,1,%02i%s%s%s%s' % ((nbsatv,) + tuple(sat[:4])))
+      output.append('GPGSV,3,2,%02i%s%s%s%s' % ((nbsatv,) + tuple(sat[4:8])))
+      output.append('GPGSV,3,3,%02i%s%s%s%s' % ((nbsatv,) + tuple(sat[8:])))
 
-    output.append('GPRMC,%(time)s,A,%(lat)s,%(lat_NS)s,%(lon)s,%(lon_EW)s,%(vel)s,15.15,%(date)s,,,E' % data)
+    output.append('GPRMC,%(time)s,A,%(lat)s,%(lat_NS)s,%(lon)s,%(lon_EW)s,%(vel)s,%(dir)s,%(date)s,,,' % data)
 
     if data['dist']:
-      output.append('RTDIST,A,3,%(pdop)s,%(hdop)s,%(vdop)s,%(dist)s' % data)
+      output.append('RTDIST,A,%(fix)s,%(pdop)s,%(hdop)s,%(vdop)s,%(dist)s' % data)
 
     result = []
     for o in output:

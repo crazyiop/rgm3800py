@@ -263,16 +263,16 @@ class RGM3800WaypointTest(unittest.TestCase):
   DATA4 = _ParseData(
       '01   16 24 29   63 ED 72 3F   F7 E5 30 3E '  # ?, UTC, Lat, Lon
       '8E 42 60 42   56 5A 8F 40   83 00 00 00 '  # Alt, Vel, Dist
-      '31 C1 '  # ?
+      '31 C1 '  # fix quality, number of satellites
       '53 00  89 00  6D 00 '  # hdop, pdop, vdop
       '03 2A   06 28   16 24   13 27   12 24   15 21 '  # sat 1-6
       '10 15   08 1D   0F 21   07 1B   1B 1E   1A 17 '  # sat 7-12
-      'A2 42 85 43')  # ?
+      'A2 42 85 43')  # direction
 
   def testNMEARecordsFormat0(self):
     date = datetime.date(2008, 1, 1)
-    golden = ('$GPGGA,113436.000,5419.6637,N,00951.3958,E,1,00,,0000.0,M,0.0,M,,0000*77\r\n'
-              '$GPRMC,113436.000,A,5419.6637,N,00951.3958,E,000.00,15.15,010108,,,E*57\r\n')
+    golden = ('$GPGGA,113436.000,5419.6637,N,00951.3958,E,,,,,,,,,*76\r\n'
+              '$GPRMC,113436.000,A,5419.6637,N,00951.3958,E,,,010108,,,*22\r\n')
 
     wp = rgm3800.RGM3800Waypoint(0)
     wp.Parse(self.DATA0)
@@ -282,8 +282,8 @@ class RGM3800WaypointTest(unittest.TestCase):
 
   def testNMEARecordsFormat1(self):
     date = datetime.date(1978, 2, 20)
-    golden = ('$GPGGA,211023.000,5419.6249,N,00951.4069,E,1,00,,0078.4,M,0.0,M,,0000*7C\r\n'
-              '$GPRMC,211023.000,A,5419.6249,N,00951.4069,E,000.00,15.15,200278,,,E*50\r\n')
+    golden = ('$GPGGA,211023.000,5419.6249,N,00951.4069,E,,,,78.4,M,,,,*2E\r\n'
+              '$GPRMC,211023.000,A,5419.6249,N,00951.4069,E,,,200278,,,*25\r\n')
 
     wp = rgm3800.RGM3800Waypoint(1)
     wp.Parse(self.DATA1)
@@ -293,8 +293,8 @@ class RGM3800WaypointTest(unittest.TestCase):
 
   def testNMEARecordsFormat2(self):
     date = datetime.date(2004, 2, 29)
-    golden = ('$GPGGA,211003.000,5419.6219,N,00951.4118,E,1,00,,0086.1,M,0.0,M,,0000*78\r\n'
-              '$GPRMC,211003.000,A,5419.6219,N,00951.4118,E,000.89,15.15,290204,,,E*53\r\n')
+    golden = ('$GPGGA,211003.000,5419.6219,N,00951.4118,E,,,,86.1,M,,,,*2A\r\n'
+              '$GPRMC,211003.000,A,5419.6219,N,00951.4118,E,000.89,,290204,,,*38\r\n')
 
     wp = rgm3800.RGM3800Waypoint(2)
     wp.Parse(self.DATA2)
@@ -304,9 +304,9 @@ class RGM3800WaypointTest(unittest.TestCase):
 
   def testNMEARecordsFormat3(self):
     date = datetime.date(2000, 5, 1)
-    golden = ('$GPGGA,223236.000,5422.1975,N,00953.8767,E,1,00,,0056.5,M,0.0,M,,0000*7A\r\n'
-              '$GPRMC,223236.000,A,5422.1975,N,00953.8767,E,002.19,15.15,010500,,,E*5A\r\n'
-              '$RTDIST,A,3,,,,105*4A\r\n')
+    golden = ('$GPGGA,223236.000,5422.1975,N,00953.8767,E,,,,56.5,M,,,,*28\r\n'
+              '$GPRMC,223236.000,A,5422.1975,N,00953.8767,E,002.19,,010500,,,*31\r\n'
+              '$RTDIST,A,,,,,105*79\r\n')
 
     wp = rgm3800.RGM3800Waypoint(3)
     wp.Parse(self.DATA3)
@@ -316,11 +316,11 @@ class RGM3800WaypointTest(unittest.TestCase):
 
   def testNMEARecordsFormat4(self):
     date = datetime.date(2008, 7, 31)
-    golden = ('$GPGGA,223641.000,5422.1973,N,00953.8785,E,1,12,0.8,0056.1,M,0.0,M,,0000*55\r\n'
+    golden = ('$GPGGA,223641.000,5422.1973,N,00953.8785,E,1,12,0.8,56.1,M,,,,*36\r\n'
               '$GPGSV,3,1,12,03,45,000,42,06,45,030,40,22,45,060,36,19,45,090,39*74\r\n'
               '$GPGSV,3,2,12,18,45,120,36,21,45,150,33,16,45,180,21,08,45,210,29*7E\r\n'
               '$GPGSV,3,3,12,15,45,240,33,07,45,270,27,27,45,300,30,26,45,330,23*7F\r\n'
-              '$GPRMC,223641.000,A,5422.1973,N,00953.8785,E,002.42,15.15,310708,,,E*53\r\n'
+              '$GPRMC,223641.000,A,5422.1973,N,00953.8785,E,002.42,266.52,310708,,,*23\r\n'
               '$RTDIST,A,3,1.4,0.8,1.1,131*6E\r\n')
 
     wp = rgm3800.RGM3800Waypoint(4)
