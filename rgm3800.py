@@ -465,6 +465,25 @@ class RGM3800Waypoint(object):
 
     # HDOP, VDOP, PDOP
     if self.format >= 4:
+      e_course = gpxdoc.createElement('course')
+      e_course.appendChild(gpxdoc.createTextNode('%.2f' % self.dir))
+      e_trkpt.appendChild(e_course)
+
+      if self.fix == 2:
+        fix = '2d'
+      elif self.fix == 3:
+        fix = '3d'
+      else:
+        fix = 'none'
+
+      e_fix = gpxdoc.createElement('fix')
+      e_fix.appendChild(gpxdoc.createTextNode('%s' % fix))
+      e_trkpt.appendChild(e_fix)
+
+      e_sat = gpxdoc.createElement('sat')
+      e_sat.appendChild(gpxdoc.createTextNode('%i' % self.nbsat))
+      e_trkpt.appendChild(e_sat)
+
       e_hdop = gpxdoc.createElement('hdop')
       e_hdop.appendChild(gpxdoc.createTextNode('%.1f' % self.hdop))
       e_trkpt.appendChild(e_hdop)
