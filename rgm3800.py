@@ -1127,6 +1127,48 @@ def DoTrackX(rgm, args):
   print gpxdoc.toxml()
   return 0
 
+def DoDlx(rgm,args):
+  if len(args) != 1 or args[0] != 'all':
+    return DoHelp(rgm, args)
+
+  info = rgm.GetInfo()
+  _, _, _, _, _, _, _, tracks, _ = info
+
+  for track in range(tracks):
+    print 'extracting tracks ',track
+
+    range_iter = ParseRange(str(track), 0, tracks-1)
+    date, format, waypoints, address = rgm.GetTrackInfo(track)
+    first_wp, last_wp = rgm.GetFirstLastWaypoints(track)
+    fich = '%s_(%s)_%iw' % ( date, first_wp.timestamp, waypoints)#fixme can be improve with an argument for a folder choice.
+    if not range_iter:
+      return DoHelp(rgm, args)
+
+    gpxdoc = minidom.getDOMImplementation().createDocument(
+      'http://www.topografix.com/GPX/1/1', 'gpx', None)
+    e_gpx = gpxdoc.documentElement
+    e_gpx.setAttribute('version', '1.1')
+    e_gpx.setAttribute('creator', 'rgm3800py')
+    e_gpx.setAttribute('xmlns', 'http://www.topografix.com/GPX/1/1')
+    e_gpx.setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance')
+    e_gpx.setAttribute('xsi:schemaLocation', 'http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd')
+
+    e_trk = gpxdoc.createElement('trk')
+    e_gpx.appendChild(e_trk)
+
+    for i in range_iter:
+      e_trkseg = gpxdoc.createElement('trkseg')
+      e_trk.appendChild(e_trkseg)
+
+      waypoints = rgm.GetWaypoints(i)
+      for wp in waypoints:
+        e_trkseg.appendChild(wp.GetGPXTrackPT(gpxdoc))
+
+    #make the file a bit more lisible
+    res=open(fich+'.gpx','w')
+    res.write((gpxdoc.toxml()).replace("<trkpt","\n<trkpt"))
+    res.close()
+  return 0
 
 def DoGMouse(rgm, args):
   if len(args) != 1 or args[0] not in ('on', 'off'):
@@ -1225,6 +1267,7 @@ def DoHelp(*args):
   print '    gmouse <on|off>                 Turn GPS mouse on/off'
   print '    dump                            Continuously read+dump data from device'
   print '    erase all                       Delete all tracks, clear memory'
+  print '    dlx all                         Dowload all the tracks in gpx files in the current folder'
   print
   print 'Known formats:'
   for i in range(10):
@@ -1269,6 +1312,7 @@ commands = {
   'erase': DoErase,
   'help': DoHelp,
   'version': DoVersion,
+  'dlx': DoDlx,
 }
 
 
